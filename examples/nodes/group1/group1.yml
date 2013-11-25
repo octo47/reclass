@@ -1,0 +1,5 @@
+classes:
+  - mysite
+parameters:
+  colour: red
+  groupped: true

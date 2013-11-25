@@ -21,11 +21,14 @@ class NodeStorageBase(object):
     nodes_uri = property(lambda self: self._nodes_uri)
     classes_uri = property(lambda self: self._classes_uri)
 
-    def _read_entity(self, node, base_uri, seen={}):
+    def _read_nodeinfo(self, node):
+        raise NotImplementedError, "Storage class not implement node info retrieval"
+
+    def _read_classinfo(self, node):
         raise NotImplementedError, "Storage class not implement node info retrieval"
 
     def nodeinfo(self, node):
-        entity, uri = self._read_nodeinfo(node, self.nodes_uri, {})
+        entity, uri = self._read_nodeinfo(node)
         entity.interpolate()
         return {'__reclass__' : {'node': node, 'node_uri': uri,
                                  'timestamp': _get_timestamp()

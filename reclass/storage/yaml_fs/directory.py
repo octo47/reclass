@@ -9,37 +9,84 @@
 import os
 import sys
 from reclass.errors import NotFoundError
+from reclass.storage.yaml_fs import YamlFile
 
 SKIPDIRS = ( '.git' , '.svn' , 'CVS', 'SCCS', '.hg', '_darcs' )
 FILE_EXTENSION = '.yml'
+GROUP_FILE_EXTENSION = '.grp'
+
 
 def vvv(msg):
-    #print >>sys.stderr, msg
+#    print >>sys.stderr, msg
     pass
+
 
 class Directory(object):
 
-    def __init__(self, path, fileclass=None):
+    def __init__(self, path, read_groups = True):
         ''' Initialise a directory object '''
         if not os.path.isdir(path):
             raise NotFoundError('No such directory: %s' % path)
         if not os.access(path, os.R_OK|os.X_OK):
             raise NotFoundError('Cannot change to or read directory: %s' % path)
         self._path = path
-        self._fileclass = fileclass
-        self._files = {}
+        self._nodes = {}
+        self._groups = {}
+        self._entity_cache = {}
+        self._read_groups = read_groups
+        self._walk()
+
+    def read_entity(self, name):
+        if not self._nodes.has_key(name):
+            raise NotFoundError("No node %s defined" % name)
+        fname = self._nodes[name]
+        if self._entity_cache.has_key(fname):
+            vvv('CACHE HIT {0}'.format(fname))
+            return self._entity_cache[fname]
+        vvv('READING {0}'.format(fname))
+        entity = YamlFile(fname).entity
+        self._entity_cache[fname] = entity
+        return entity
+
+    def node_uri(self, name):
+        return self._nodes[name]
+
+    def entities(self):
+        entities = {}
+        for k, v in self._nodes.iteritems():
+            entity = self.read_entity(k)
+            entities[k] = entity
+        return entities
 
     def _register_files(self, dirpath, filenames):
         for f in filter(lambda f: f.endswith(FILE_EXTENSION), filenames):
-            vvv('REGISTER {0}'.format(f))
+            vvv('REGISTER NODE {0}'.format(f))
+            nodename = f[:-len(FILE_EXTENSION)]
             f = os.path.join(dirpath, f)
-            ptr = None if not self._fileclass else self._fileclass(f)
-            self._files[f] = ptr
+            self._nodes[nodename] = f
 
-    files = property(lambda self: self._files)
+    def _register_groups(self, dirpath, filenames):
+        for f in filter(lambda f: f.endswith(GROUP_FILE_EXTENSION), filenames):
+            grp = f[:-len(GROUP_FILE_EXTENSION)]
+            vvv('REGISTER GROUP {0}'.format(grp))
+            ptr = os.path.join(dirpath, ''.join([grp, FILE_EXTENSION]))
+            f = os.path.join(dirpath, f)
+            self._groups[grp] = ptr
+            if self._nodes.has_key(grp):
+                del self._nodes[grp]
+            ins = open( f, "r" )
+            for line in ins:
+                line = line.rstrip()
+                if self._nodes.has_key(line):
+                    # todo make it possible to merge multiple definitions
+                    raise LookupError('Node %s already registered from %s' % (line, self._nodes[line]))
+                vvv('REGISTER NODE {0}->{1}'.format(line, ptr))
+                self._nodes[line] = ptr
+            ins.close()
 
-    def walk(self, register_fn=None):
-        if not callable(register_fn): register_fn = self._register_files
+    nodes = property(lambda self: self._nodes)
+
+    def _walk(self):
         for dirpath, dirnames, filenames in os.walk(self._path,
                                                       topdown=True,
                                                       followlinks=True):
@@ -49,7 +96,10 @@ class Directory(object):
                 if d in dirnames:
                     vvv('   SKIP subdirectory {0}'.format(d))
                     dirnames.remove(d)
-            register_fn(dirpath, filenames)
+            self._register_files(dirpath, filenames)
+            if self._read_groups:
+                self._register_groups(dirpath, filenames)
 
     def __repr__(self):
         return '<{0} {1}>'.format(self.__class__.__name__, self._path)
+
