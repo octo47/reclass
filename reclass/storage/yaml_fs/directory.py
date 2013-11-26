@@ -13,7 +13,7 @@ from reclass.storage.yaml_fs import YamlFile
 
 SKIPDIRS = ( '.git' , '.svn' , 'CVS', 'SCCS', '.hg', '_darcs' )
 FILE_EXTENSION = '.yml'
-GROUP_FILE_EXTENSION = '.grp'
+HOSTS_FILE_EXTENSION = '.hosts'
 
 
 def vvv(msg):
@@ -66,9 +66,9 @@ class Directory(object):
             self._nodes[nodename] = f
 
     def _register_groups(self, dirpath, filenames):
-        for f in filter(lambda f: f.endswith(GROUP_FILE_EXTENSION), filenames):
-            grp = f[:-len(GROUP_FILE_EXTENSION)]
-            vvv('REGISTER GROUP {0}'.format(grp))
+        for f in filter(lambda f: f.endswith(HOSTS_FILE_EXTENSION), filenames):
+            grp = f[:-len(HOSTS_FILE_EXTENSION)]
+            vvv('REGISTER HOSTS {0}'.format(grp))
             ptr = os.path.join(dirpath, ''.join([grp, FILE_EXTENSION]))
             f = os.path.join(dirpath, f)
             self._groups[grp] = ptr
