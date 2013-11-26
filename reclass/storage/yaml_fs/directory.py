@@ -23,14 +23,15 @@ def vvv(msg):
 
 class Directory(object):
 
-    def __init__(self, path, read_groups = True):
+    def __init__(self, path, read_groups = True, use_namespaces = False):
         ''' Initialise a directory object '''
         if not os.path.isdir(path):
             raise NotFoundError('No such directory: %s' % path)
         if not os.access(path, os.R_OK|os.X_OK):
             raise NotFoundError('Cannot change to or read directory: %s' % path)
-        self._path = path
+        self._path = os.path.abspath(path)
         self._nodes = {}
+        self._use_namespaces = use_namespaces
         self._groups = {}
         self._entity_cache = {}
         self._read_groups = read_groups
@@ -60,9 +61,11 @@ class Directory(object):
 
     def _register_files(self, dirpath, filenames):
         for f in filter(lambda f: f.endswith(FILE_EXTENSION), filenames):
-            vvv('REGISTER NODE {0}'.format(f))
             nodename = f[:-len(FILE_EXTENSION)]
+            if self._use_namespaces:
+                nodename = self.__namespace(dirpath, nodename)
             f = os.path.join(dirpath, f)
+            vvv('REGISTER NODE {0} ({1})'.format(nodename, f))
             self._nodes[nodename] = f
 
     def _register_groups(self, dirpath, filenames):
@@ -83,6 +86,12 @@ class Directory(object):
                 vvv('REGISTER NODE {0}->{1}'.format(line, ptr))
                 self._nodes[line] = ptr
             ins.close()
+
+    def __namespace(self, dirpath, nodename):
+        fullpath = os.path.abspath(os.path.join(dirpath, nodename))
+        namespace = fullpath[len(self._path)+1:].replace(os.path.sep, '.')
+        vvv('Got namespace {0}'.format(namespace))
+        return namespace
 
     nodes = property(lambda self: self._nodes)
 

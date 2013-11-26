@@ -16,7 +16,7 @@ import reclass.errors
 class ExternalNodeStorage(NodeStorageBase):
     def __init__(self, nodes_uri, classes_uri):
         super(ExternalNodeStorage, self).__init__(nodes_uri, classes_uri)
-        self._classes_directory = Directory(self._classes_uri, read_groups=False)
+        self._classes_directory = Directory(self._classes_uri, read_groups=False, use_namespaces=True)
         self._nodes_directory = Directory(self._nodes_uri)
 
     def _read_nodeinfo(self, name):

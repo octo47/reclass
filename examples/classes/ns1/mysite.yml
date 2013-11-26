@@ -1,0 +1,5 @@
+applications:
+  - test2
+parameters:
+  realm: mysite2
+  greeting: Hello!
