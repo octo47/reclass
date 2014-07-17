@@ -14,7 +14,7 @@ from reclass.storage import NodeStorageBase
 STORAGE_NAME = 'alias_proxy'
 
 def vvv(msg):
-    print >>sys.stderr, msg
+    #print >>sys.stderr, msg
     pass
 
 class AliasesProxy(NodeStorageBase):
