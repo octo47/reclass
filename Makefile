@@ -4,7 +4,7 @@
 # Copyright © 2007–13 martin f. krafft <madduck@madduck.net>
 # Released under the terms of the Artistic Licence 2.0
 #
-PYFILES = $(shell find -name .git -o -name dist -o -name build -prune -o -name '*.py' -print)
+PYFILES = $(shell find ./ -name .git -o -name dist -o -name build -prune -o -name '*.py' -print)
 
 tests:
 	python ./run_tests.py

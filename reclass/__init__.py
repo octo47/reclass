@@ -10,10 +10,12 @@
 from output import OutputLoader
 from storage.loader import StorageBackendLoader
 from storage.memcache_proxy import MemcacheProxy
+from storage.aliases_proxy import AliasesProxy
 
 def get_storage(storage_type, nodes_uri, classes_uri, **kwargs):
     storage_class = StorageBackendLoader(storage_type).load()
-    return MemcacheProxy(storage_class(nodes_uri, classes_uri, **kwargs))
+    aliases_proxy = AliasesProxy(storage_class(nodes_uri, classes_uri, **kwargs), nodes_uri)
+    return MemcacheProxy(aliases_proxy)
 
 
 def output(data, fmt, pretty_print=False):
